@@ -1,0 +1,19 @@
+{
+  "name": "performance-crawler-scraper",
+  "version": "1.0.0",
+  "description": "Crawls a domain and extracts its performance data on csv format",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frontend-fxs/performance-crawler-scraper.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/frontend-fxs/performance-crawler-scraper/issues"
+  },
+  "homepage": "https://github.com/frontend-fxs/performance-crawler-scraper#readme"
+}
