@@ -1,4 +1,6 @@
 const puppeteer = require('puppeteer');
+const lighthouse = require('lighthouse');
+const { URL } = require('url');
 const fs = require('fs');
 
 const RESTART = true;
@@ -20,25 +22,24 @@ if (RESTART) {
     visitedUrls = [];
 }
 
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
 const domain = process.argv[2] || "https://www.fxstreet.com/";
-
-const csvWriter = createCsvWriter({
-    path: `performance.csv`,
-    header: [
-        { id: 'page', title: 'PAGE' },
-        { id: 'attributeValue', title: 'ATTRIBUTE VALUE' },
-    ]
-});
 
 if (!domain) {
     throw "Please provide URL as a first argument";
 }
 
-
 async function run(url) {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+        headless: false,
+        defaultViewport: null,
+    });
+    browser.on('targetchanged', async target => {
+        const page = await target.page();
+        if (page && page.url() === url) {
+            await page.addStyleTag({ content: '* {color: red}' });
+        }
+    });
     const page = await browser.newPage();
 
     await page.setCookie(
@@ -60,7 +61,7 @@ async function run(url) {
         await page.goto(url, { waitUntil: 'networkidle2', timeout: 0 });
 
         const domainUrls = await page.evaluate((domain) => {
-            return Promise.resolve(Array.from(document.querySelectorAll(`[href^='${domain}']`)).map(item => item.href));
+            return Promise.resolve( Array.from(document.querySelectorAll(`[href^='${domain}']`)).map( item => item.href ));
         }, domain);
         domainUrls.map(item => {
             if (!visitedUrls.includes(item) && !unvisitedUrls.includes(item)) {
@@ -68,6 +69,13 @@ async function run(url) {
                 fs.writeFileSync("unvisitedUrls.json", JSON.stringify(unvisitedUrls));
             }
         });
+        const { lhr } = await lighthouse(url, {
+            port: (new URL(browser.wsEndpoint())).port,
+            output: 'json',
+            logLevel: 'info',
+            outputPath: `${url}.json`
+        });
+
     } catch (error) {
         console.log(error.message);
     }
